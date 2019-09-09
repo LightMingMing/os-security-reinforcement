@@ -6,6 +6,8 @@ Author: 赵明明
 
 import re
 
+from color import red, yellow, green
+
 
 class Prop(object):
     """属性"""
@@ -80,3 +82,39 @@ def escape(s=""):
         result += arr[i] + " +"
     result += arr[len(arr) - 1]
     return result
+
+
+def num_ascii(s):
+    n = 0
+    for c in range(len(s)):
+        if ord(s[c]) < 128:
+            n += 1
+    return n
+
+
+def len_padding(total_len, prefix):
+    if len('中') == 1:
+        return total_len - 2 * len(prefix) + num_ascii(prefix)  # python3.7
+    else:
+        return total_len - (2 * len(prefix) + num_ascii(prefix)) / 3  # python2.7
+
+
+def padding(total_len, prefix):
+    s = ""
+    for i in range(len_padding(total_len, prefix)):
+        s += "."
+    return s
+
+
+def show_colorful(props):
+    for prop in props:
+        pad = padding(80, prop.desc)
+        if prop.status == -2:
+            print("%s %s [%s]" % (prop.desc, pad, red("文件不存在")))
+        elif prop.status == -1:
+            print("%s %s [%s]" % (prop.desc, pad, red("配置错误, 期望'%s', 实际'%s'" % (prop.exp_val, prop.rel_val))))
+        elif prop.status == 0:
+            print("%s %s [%s]" % (prop.desc, pad, yellow("未配置")))
+        elif prop.status == 1:
+            print("%s %s [%s]" % (prop.desc, pad, green("配置正确")))
+    print
