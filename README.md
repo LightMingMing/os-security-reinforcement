@@ -120,10 +120,14 @@
     Protocol                2
     StrictModes             yes
     PermitRootLogin         no   # 不允许root远程登录
-    PrintLastLog            yes
+    PrintLastLog            yes  # SSH登录后打印上次登录日志
     PermitEmptyPasswords    no   # 不允许空密码
     # 修改后需重启sshd服务
     systemctl restart sshd
+    ```
+    ```
+    PrintLastLog设为yes, 用户在SSH连接登录后, 终端可以看到如下日志
+    Last login: Mon Sep  9 00:32:18 2019 from *.*.*.*
     ```
 2. root路径检测
     ```shell
