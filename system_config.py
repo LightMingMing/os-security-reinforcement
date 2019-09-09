@@ -18,8 +18,10 @@ class Prop(object):
         self._rel_val = None
         self._status = 0
         self._op = op
-        self._pattern_prefix = escape(self._key) + pattern_split
-        self._pattern_split = pattern_split
+        # self._pattern_prefix = escape(self._key) + pattern_split
+        self._pattern_prefix = re.compile(escape(self._key) + pattern_split)
+        # self._pattern_split = pattern_split
+        self._pattern_split = re.compile(pattern_split)
         self._num_split = num_split
         self.__validate()
 
@@ -52,14 +54,15 @@ class Prop(object):
             f = open(self._file_path, "rb")
             context = f.read()
             f.close()
-            lines = context.split("\n")
-            for line in lines:
-                if re.match(self._pattern_prefix, line):
-                    arr = re.split(self._pattern_split, line, self._num_split)
+            for line in context.splitlines():
+                if self._pattern_prefix.match(str(line)):
+                    arr = self._pattern_split.split(str(line), self._num_split)
                     self._rel_val = arr[self._num_split - 1]
                     if self._exp_val == self._rel_val:
+                        # 期望配置
                         self._status = 1
                     else:
+                        # 非期望配置
                         self._status = -1
                     return
             # 未配置
