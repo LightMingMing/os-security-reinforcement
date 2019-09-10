@@ -40,7 +40,21 @@
 3. DNS服务器配置
     ```shell
     # 统一通过`nmcli`配置，centos后续版本会强制要求
-    # TODO
+    # 相关命令
+    nmcli -version
+    nmcli tool, version 1.12.0-10.el7_6
+    # 查看连接
+    nmcli connection show
+    NAME         UUID   TYPE      DEVICE
+    System eth0  12345  ethernet  eth0
+    # 展示DNS
+    nmcli dev show eth0 | grep IP4.DNS
+    IP4.DNS[1]:                             *.*.*.*
+    # 修改DNS
+    nmcli connection modify 12345  ipv4.dns "*.*.*.* *.*.*.*"
+    # 使生效, 之后查看/etc/resolv.conf文件, 可以看到nameserver已被自动修改
+    nmcli connection up 12345
+    Connection successfully activated (D-Bus active path: /org/freedesktop/NetworkManager/ActiveConnection/2)
     ```
 4. 禁止SSH启用域名服务
     ```shell
@@ -150,3 +164,7 @@
     # /etc/rsyslog.conf
     authpriv.*        /var/log/secure
     ```
+
+## 参考链接
+[使用NetworkManager命令行工具NMCLI](https://access.redhat.com/documentation/zh-cn/red_hat_enterprise_linux/7/html/networking_guide/sec-using_the_networkmanager_command_line_tool_nmcli)  
+[Linux查看修改DNS配置](https://www.cnblogs.com/kerrycode/p/5407635.html)
