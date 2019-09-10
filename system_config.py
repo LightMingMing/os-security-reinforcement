@@ -117,4 +117,4 @@ def show_colorful(props):
             print("%s %s [%s]" % (prop.desc, pad, yellow("未配置")))
         elif prop.status == 1:
             print("%s %s [%s]" % (prop.desc, pad, green("配置正确")))
-    print
+    print("")
