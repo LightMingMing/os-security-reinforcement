@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 """
-系统配置封装为对象
+操作系统配置规范
 Author: 赵明明
 """
 
@@ -10,8 +10,8 @@ import re
 from color import red, yellow, green
 
 
-class Prop(object):
-    """属性"""
+class Spec(object):
+    """配置规范"""
 
     def __init__(self, desc, file_path, key, exp_val, op=" ", pattern_split=" +", num_split=2):
         self._desc = desc
@@ -134,25 +134,25 @@ def padding(total_len, prefix):
     return s
 
 
-def show_colorful(props, flags=True):
-    for prop in props:
-        pad = padding(80, prop.desc)
-        if prop.status == -2:
-            print("%s %s [%s]" % (prop.desc, pad, red("文件不存在")))
-        elif prop.status == -1:
-            print("%s %s [%s]" % (prop.desc, pad, red("配置错误, 期望'%s', 实际'%s'" % (prop.exp_val, prop.rel_val))))
-        elif prop.status == 0:
-            print("%s %s [%s]" % (prop.desc, pad, yellow("未配置")))
-        elif prop.status == 1:
-            print("%s %s [%s]" % (prop.desc, pad, green("配置正确")))
+def show_colorful(specs, flags=True):
+    for spec in specs:
+        pad = padding(80, spec.desc)
+        if spec.status == -2:
+            print("%s %s [%s]" % (spec.desc, pad, red("文件不存在")))
+        elif spec.status == -1:
+            print("%s %s [%s]" % (spec.desc, pad, red("配置错误, 期望'%s', 实际'%s'" % (spec.exp_val, spec.rel_val))))
+        elif spec.status == 0:
+            print("%s %s [%s]" % (spec.desc, pad, yellow("未配置")))
+        elif spec.status == 1:
+            print("%s %s [%s]" % (spec.desc, pad, green("配置正确")))
     if flags:
         print("")
 
 
-def modify_optional(props):
-    for prop in props:
-        if prop.status == -1 or prop.status == 0:
-            show_colorful([prop], False)
+def modify_optional(specs):
+    for spec in specs:
+        if spec.status == -1 or spec.status == 0:
+            show_colorful([spec], False)
             promise = ""
             try:
                 while promise not in ['yes', 'y', 'not', 'n']:
@@ -162,4 +162,4 @@ def modify_optional(props):
                 print("")
                 exit(1)
             if promise in ['yes', 'y']:
-                prop.modify()
+                spec.modify()
