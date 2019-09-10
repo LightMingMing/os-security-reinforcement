@@ -97,9 +97,19 @@
     
     # 修改后需重启服务
     
+    # 客户端chronyc相关命令
     # 查看时间同步源状态
-    # chronyc sources -v
-    210 Number of sources = 1
+    $ chronyc sources
+    210 Number of sources = 4
+    MS Name/IP address         Stratum Poll Reach LastRx Last sample               
+    ===============================================================================
+    ^? ntp.wdc1.us.leaseweb.net      2   6     1    84    -25ms[  -25ms] +/-  243ms
+    ^+ undefined.hostname.local>     2   6   367    30    +12ms[  +12ms] +/-  133ms
+    ^+ electabuzz.felixc.at          3   6   367    26    +25ms[  +25ms] +/-  158ms
+    ^* ntp.xtom.nl                   2   6   377    27    -28ms[  -28ms] +/-  101ms
+   
+    $ chronyc sources -v
+    210 Number of sources = 4
     
       .-- Source mode  '^' = server, '=' = peer, '#' = local clock.
      / .- Source state '*' = current synced, '+' = combined , '-' = not combined,
@@ -109,10 +119,20 @@
     ||      Log2(Polling interval) --.      |          |  yyyy = measured offset,
     ||                                \     |          |  zzzz = estimated error.
     ||                                 |    |           \
-    MS Name/IP address         Stratum Poll Reach LastRx Last sample
+    MS Name/IP address         Stratum Poll Reach LastRx Last sample               
     ===============================================================================
-    ^? **.**.**.**                  0   6     0     -     +0ns[   +0ns] +/-    0ns
-    TODO 不知道为啥, 我这里老是unreachable..., 明天再说了...
+    ^? ntp.wdc1.us.leaseweb.net      2   7     2   187    -25ms[  -25ms] +/-  243ms
+    ^+ undefined.hostname.local>     2   6   337     1    +15ms[  +15ms] +/-  136ms
+    ^+ electabuzz.felixc.at          3   6   357    63    +25ms[  +25ms] +/-  159ms
+    ^* ntp.xtom.nl                   2   6   375     1    -28ms[  -28ms] +/-  104ms
+       
+    $ chronyc activity
+    200 OK
+    4 sources online
+    0 sources offline
+    0 sources doing burst (return to online)
+    0 sources doing burst (return to offline)
+    0 sources with unknown address
     ```
 2. 时区设置
     ```shell
@@ -225,5 +245,6 @@
     ```
 
 ## 参考链接
-[使用NetworkManager命令行工具NMCLI](https://access.redhat.com/documentation/zh-cn/red_hat_enterprise_linux/7/html/networking_guide/sec-using_the_networkmanager_command_line_tool_nmcli)  
-[Linux查看修改DNS配置](https://www.cnblogs.com/kerrycode/p/5407635.html)
+1. [使用NetworkManager命令行工具NMCLI](https://access.redhat.com/documentation/zh-cn/red_hat_enterprise_linux/7/html/networking_guide/sec-using_the_networkmanager_command_line_tool_nmcli)
+2. [Linux查看修改DNS配置](https://www.cnblogs.com/kerrycode/p/5407635.html)
+3. [chronyc(1) Manual Page](https://chrony.tuxfamily.org/doc/3.1/chronyc.html)
