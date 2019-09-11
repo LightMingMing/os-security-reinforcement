@@ -166,17 +166,24 @@ def display_colorful(specs, flags=True):
         print("")
 
 
+def promised(msg):
+    promise = ""
+    try:
+        while promise not in ['yes', 'y', 'not', 'n']:
+            # TODO Python2(raw_input) Python3(input)
+            promise = str(raw_input(msg))
+    except KeyboardInterrupt:
+        print("")
+        exit(1)
+    if promise in ['yes', 'y']:
+        return True
+    else:
+        return False
+
+
 def modify_optional(specs):
     for spec in specs:
         if spec.status == -1 or spec.status == 0:
             display_colorful([spec], False)
-            promise = ""
-            try:
-                while promise not in ['yes', 'y', 'not', 'n']:
-                    # TODO Python2(raw_input) Python3(input)
-                    promise = str(raw_input(green("是否修复 ? ")))
-            except KeyboardInterrupt:
-                print("")
-                exit(1)
-            if promise in ['yes', 'y']:
+            if promised(green("是否修复 ? ")):
                 spec.modify()

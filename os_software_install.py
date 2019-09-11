@@ -12,7 +12,7 @@ import os
 import re
 
 from color import green
-from os_specification import Spec, display_colorful, modify_optional
+from os_specification import Spec, display_colorful, modify_optional, promised
 
 
 # TODO
@@ -28,7 +28,7 @@ from os_specification import Spec, display_colorful, modify_optional
 # nginx安装不成功, 需要配置yum源? 还是直接wget下载压缩包
 # nginx, java 版本问题
 
-def load_conf_dict():
+def read_os_conf():
     """读取配置文件"""
     os_conf_dict = {}
     os_conf_file = open("os.conf")
@@ -42,25 +42,19 @@ def load_conf_dict():
     return os_conf_dict
 
 
-if __name__ == "__main__":
-    os_dict = load_conf_dict()
-    print(os_dict)
-
-    # yum代理
+def yum_proxy_conf(proxy, proxy_username="", proxy_password=""):
     yum_specs = []
-    proxy = os_dict['yum.proxy']
     if proxy != "":
         yum_specs.append(Spec("yum代理", "/etc/yum.conf", "proxy", proxy, "=", "="))
-        proxy_username = os_dict['yum.proxy.username']
         if proxy_username != "":
             yum_specs.append(Spec("用户名", "/etc/yum.conf", "proxy_username", proxy_username, "=", "="))
-        proxy_password = os_dict['yum.proxy.password']
         if proxy_password != "":
             yum_specs.append(Spec("用户密码", "/etc/yum.conf", "proxy_password", proxy_password, "=", "="))
-    display_colorful(yum_specs)
-    modify_optional(yum_specs)
+        display_colorful(yum_specs)
+        modify_optional(yum_specs)
 
-    # 软件安装
+
+def software_install():
     """
     os.system('yum install vim')
     os.system('yum install gcc')
@@ -74,59 +68,74 @@ if __name__ == "__main__":
     os.system('yum install lvm2')
     os.system('yum install nginx')  # TODO
     os.system('yum install java')  # TODO
+    # TODO zabbix
     """
 
-    # DNS配置
-    # 查询已配置的DNS
-    # $ nmcli dev show | grep IP4.DNS
-    f = os.popen("nmcli dev show | grep IP4.DNS")
-    context = f.read()
-    f.close()
-    act_dns_list = []
-    for line in context.splitlines():
-        arr = re.split(" +", line, 2)
-        act_dns_list.append(arr[1])
 
-    print(green("系统实际DNS配置:"))
-    print(act_dns_list)
+def execute_command(command):
+    f_open = os.popen(command)
+    output = f_open.read()
+    f_open.close()
+    return output
 
-    exp_dns_conf = os_dict['name.servers']
-    exp_dns_list = re.split(" +", exp_dns_conf)
+
+def con_uuid_list():
+    """系统连接的uuid集合"""
+    uuid_list = []
+    con_context = execute_command("nmcli connection show")
+    print(con_context)
+    lines = con_context.splitlines()
+    uuid_head_idx = lines[0].find("UUID")
+    for line in lines:
+        uuid_tail_idx = line.find(" ", uuid_head_idx)
+        uuid = line[uuid_head_idx:uuid_tail_idx]
+        if uuid != "UUID":
+            uuid_list.append(uuid)
+    return uuid_list
+
+
+def modify_dns_conf_optional(dns_conf):
+    exp_dns_list = re.split(" +", dns_conf)
     print(green("期望DNS配置:"))
     print(exp_dns_list)
 
-    # 是否需要配置
+    # 查询当前配置的DNS
+    context = execute_command("nmcli dev show | grep IP4.DNS")
+    act_dns_list = []
+    for act_dns in context.splitlines():
+        act_dns_list.append(re.split(" +", act_dns, 2)[1])
+    print(green("系统实际DNS配置:"))
+    print(act_dns_list)
+
+    # 比对
     need_modify = False
     for exp_dns in exp_dns_list:
         if exp_dns not in act_dns_list:
             need_modify = True
             break
 
-    # CentOS 7 获取所有连接的UUID
-    # $ nmcli connection show
-    # NAME         UUID                                  TYPE      DEVICE
-    # System eth0  5fb06bd0-0bb0-7ffb-45f1-d6edd65f3e03  ethernet  eth0
+    # 获取所有连接
     if need_modify:
-        print(green("进行DNS配置"))
-        uuid_list = []
-        f = os.popen("nmcli connection show")
-        con_show_context = f.read()
-        print(con_show_context)
-        lines = con_show_context.splitlines()
-        f.close()
-        uuid_head_idx = lines[0].find("UUID")
-        for line in lines:
-            uuid_tail_idx = line.find(" ", uuid_head_idx)
-            uuid = line[uuid_head_idx:uuid_tail_idx]
-            if uuid != "UUID":
-                uuid_list.append(uuid)
-        # 配置连接DNS并生效
-        # $ nmcli connection modify $uuid  ipv4.dns "*.*.*.* *.*.*.*"
-        # $ nmcli connection up $uuid
-        for uuid in uuid_list:
-            os.system("nmcli connection modify %s ipv4.dns \"%s\"" % (uuid, exp_dns_conf))
-            os.system("nmcli connection up %s" % uuid)
+        # 修改连接的DNS, 并生效
+        for uuid in con_uuid_list():
+            if promised(green("是否修改连接'%s'的DNS ? " % uuid)):
+                os.system("nmcli connection modify %s ipv4.dns \"%s\"" % (uuid, dns_conf))
+                os.system("nmcli connection up %s" % uuid)
     else:
-        print(green("不需要DNS配置"))
+        print(green("DNS配置正确, 不需要更改"))
+
+
+if __name__ == "__main__":
+    os_dict = read_os_conf()
+    print(os_dict)
+
+    # yum代理
+    yum_proxy_conf(os_dict['yum.proxy'], os_dict['yum.proxy.username'], os_dict['yum.proxy.password'])
+
+    # 软件安装
+    software_install()
+
+    # DNS配置
+    modify_dns_conf_optional(os_dict['name.servers'])
 
     # TODO 系统时间同步
