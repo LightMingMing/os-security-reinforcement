@@ -7,7 +7,7 @@
 **新增虚拟机**
 1. yum源代理配置
 2. 软件安装
-    + 基础环境: `vim`, `gcc`, `iftop`, `firewall-cmd`, `nslookup`, `iftop`, `iperf`, `telnet`, `zip`, `tar`, `lvm2`
+    + 基础环境: `vim`, `gcc`, `iftop`, `firewall-cmd`, `nslookup`, `iperf`, `telnet`, `zip`, `tar`, `lvm2`
     + 运行环境: `nginx`, `java`
     + 监控环境: `zabbix`
 3. 服务项检测, 仅开启以下服务
