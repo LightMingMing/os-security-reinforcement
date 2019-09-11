@@ -125,6 +125,15 @@ def modify_dns_conf_optional(dns_conf):
         print(green("DNS配置正确, 不需要更改"))
 
 
+def sync_system_time(chrony_server_list):
+    """
+    同步系统时间
+    1. 获取/etc/chrony.conf中所有server
+    2. 与chrony_server_list进行比对
+    3. 注释掉不期望的server, 添加未配置的server
+    """
+
+
 if __name__ == "__main__":
     os_dict = read_os_conf()
     print(os_dict)
