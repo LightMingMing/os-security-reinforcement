@@ -6,7 +6,7 @@ Author: 赵明明
 import os
 
 from color import green, red
-from os_specification import Spec, show_colorful, padding, modify_optional
+from os_specification import Spec, display_colorful, padding, modify_optional
 
 
 def info(msg):
@@ -108,12 +108,12 @@ if __name__ == "__main__":
         Spec("开启日志审核", "/etc/rsyslog.conf", "authpriv.*", "/var/log/secure")]
 
     # 展示结果
-    show_colorful(dsn_specs)
-    show_colorful(net_specs)
-    show_colorful(proc_specs)
-    show_colorful(account_specs)
-    show_colorful(ssh_specs)
-    show_colorful(other_specs)
+    display_colorful(dsn_specs)
+    display_colorful(net_specs)
+    display_colorful(proc_specs)
+    display_colorful(account_specs)
+    display_colorful(ssh_specs)
+    display_colorful(other_specs)
 
     info("2.安全配置修复 ................................................................................")
     # 进行修复
@@ -126,9 +126,9 @@ if __name__ == "__main__":
 
     info("3. 展示修复结果 ................................................................................")
     # 再次展示
-    show_colorful(dsn_specs)
-    show_colorful(net_specs)
-    show_colorful(proc_specs)
-    show_colorful(account_specs)
-    show_colorful(ssh_specs)
-    show_colorful(other_specs)
+    display_colorful(dsn_specs)
+    display_colorful(net_specs)
+    display_colorful(proc_specs)
+    display_colorful(account_specs)
+    display_colorful(ssh_specs)
+    display_colorful(other_specs)
