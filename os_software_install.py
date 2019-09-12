@@ -11,7 +11,7 @@ Author: 赵明明
 import os
 import re
 
-from color import green
+from color import green, red
 from os_specification import Spec, display_colorful, modify_optional, promised
 
 
@@ -55,17 +55,17 @@ def yum_proxy_conf(proxy, proxy_username="", proxy_password=""):
 
 
 def software_install():
-    """
     os.system('yum install vim')
     os.system('yum install gcc')
-    os.system('yum install iftop')  # TODO
-    os.system('yum install firewalld')
-    os.system('yum install bind-utils')  # nslookup
-    os.system('yum install iperf3')  # TODO
     os.system('yum install telnet')
     os.system('yum install tar')
     os.system('yum install zip')
     os.system('yum install lvm2')
+    os.system('yum install firewalld')
+    os.system('yum install bind-utils')  # nslookup
+    """
+    os.system('yum install iftop')  # TODO
+    os.system('yum install iperf3')  # TODO
     os.system('yum install nginx')  # TODO
     os.system('yum install java')  # TODO
     # TODO zabbix
@@ -96,7 +96,7 @@ def con_uuid_list():
 
 def modify_dns_conf_optional(dns_conf):
     exp_dns_list = re.split(" +", dns_conf)
-    print(green("期望DNS配置:"))
+    print("期望DNS配置:")
     print(exp_dns_list)
 
     # 查询当前配置的DNS
@@ -104,7 +104,7 @@ def modify_dns_conf_optional(dns_conf):
     act_dns_list = []
     for act_dns in dns_ctx.splitlines():
         act_dns_list.append(re.split(" +", act_dns, 2)[1])
-    print(green("系统实际DNS配置:"))
+    print("系统实际DNS配置:")
     print(act_dns_list)
 
     # 比对
@@ -122,7 +122,7 @@ def modify_dns_conf_optional(dns_conf):
                 os.system("nmcli connection modify %s ipv4.dns \"%s\"" % (uuid, dns_conf))
                 os.system("nmcli connection up %s" % uuid)
     else:
-        print(green("DNS配置正确, 不需要更改"))
+        print("DNS配置正确, 不需要更改")
 
 
 def sync_system_time(chrony_server_conf):
@@ -133,7 +133,7 @@ def sync_system_time(chrony_server_conf):
     3. 注释掉不期望的server, 添加未配置的server
     """
     exp_server_list = re.split(" +", chrony_server_conf)
-    print(green('期望时间服务器配置:'))
+    print('期望时间服务器配置:')
     print(exp_server_list)
 
     chr_ctx = execute_command("cat /etc/chrony.conf | grep -n '^server'")  # -n 显示行号
@@ -143,7 +143,7 @@ def sync_system_time(chrony_server_conf):
         arr = re.split(" +", line, 3)
         act_server_list.append(arr[1])
         line_num_list.append(arr[0][:arr[0].find(':')])  # 1:server 获取在文件中行号
-    print(green('系统实际时间服务配置:'))
+    print('系统实际时间服务配置:')
     # print(chr_ctx)
     print(act_server_list)
 
@@ -169,14 +169,23 @@ def sync_system_time(chrony_server_conf):
 def set_system_timezone():
     """查看当前时区, 不是Asia/Shanghai则进行修改"""
     zone_ctx = execute_command("timedatectl status | grep zone")
-    print(green("当前时区"))
+    print("当前时区")
     print(zone_ctx)
     if zone_ctx.find('Asia/Shanghai') == -1:
         if promised(green("当前时区非'Asia/Shanghai', 是否进行配置 ? ")):
             os.system("timedatectl set-timezone Asia/Shanghai")
             os.system("chronyc -a makestep")
     else:
-        print(green("时区配置正确, 不需要更改"))
+        print("时区配置正确, 不需要更改")
+
+
+def password_less_login():
+    if os.path.exists('id_rsa.pub'):
+        if promised(green("是否进行免密登录配置 ? ")):
+            os.system("mkdir -p ~/.ssh && chmod 700 ~/.ssh")
+            os.system("cat id_rsa.pub | cat >> ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys")
+    else:
+        print(red("免密登录, 没有找到'id_rsa.pub'文件"))
 
 
 if __name__ == "__main__":
@@ -202,3 +211,7 @@ if __name__ == "__main__":
     # 时区设置
     print(green("5.时区设置 ...................................................................................."))
     set_system_timezone()
+
+    # 免密登录
+    print(green("6.免密登录 ...................................................................................."))
+    password_less_login()
