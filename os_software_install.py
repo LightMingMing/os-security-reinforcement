@@ -82,9 +82,9 @@ def execute_command(command):
 def con_uuid_list():
     """系统连接的uuid集合"""
     uuid_list = []
-    con_context = execute_command("nmcli connection show")
-    print(con_context)
-    lines = con_context.splitlines()
+    con_ctx = execute_command("nmcli connection show")
+    print(con_ctx)
+    lines = con_ctx.splitlines()
     uuid_head_idx = lines[0].find("UUID")
     for line in lines:
         uuid_tail_idx = line.find(" ", uuid_head_idx)
@@ -100,9 +100,9 @@ def modify_dns_conf_optional(dns_conf):
     print(exp_dns_list)
 
     # 查询当前配置的DNS
-    context = execute_command("nmcli dev show | grep IP4.DNS")
+    dns_ctx = execute_command("nmcli dev show | grep IP4.DNS")
     act_dns_list = []
-    for act_dns in context.splitlines():
+    for act_dns in dns_ctx.splitlines():
         act_dns_list.append(re.split(" +", act_dns, 2)[1])
     print(green("系统实际DNS配置:"))
     print(act_dns_list)
@@ -125,13 +125,45 @@ def modify_dns_conf_optional(dns_conf):
         print(green("DNS配置正确, 不需要更改"))
 
 
-def sync_system_time(chrony_server_list):
+def sync_system_time(chrony_server_conf):
     """
     同步系统时间
     1. 获取/etc/chrony.conf中所有server
     2. 与chrony_server_list进行比对
     3. 注释掉不期望的server, 添加未配置的server
     """
+    exp_server_list = re.split(" +", chrony_server_conf)
+    print(green('期望时间服务器配置:'))
+    print(exp_server_list)
+
+    chr_ctx = execute_command("cat /etc/chrony.conf | grep -n '^server'")  # -n 显示行号
+    line_num_list = []
+    act_server_list = []
+    for line in chr_ctx.splitlines():
+        arr = re.split(" +", line, 3)
+        act_server_list.append(arr[1])
+        line_num_list.append(arr[0][:arr[0].find(':')])  # 1:server 获取在文件中行号
+    print(green('系统实际时间服务配置:'))
+    # print(chr_ctx)
+    print(act_server_list)
+
+    # 比对, 注释掉不期望的配置
+    for idx in range(len(act_server_list)):
+        act_server = act_server_list[idx]
+        if act_server not in exp_server_list:
+            if promised(green("不期望的时间服务器'%s', 是否需要将其注释 ? " % act_server)):
+                line_num = line_num_list[idx]
+                command = "sed -i '%ss/^/# /' /etc/chrony.conf" % line_num
+                print(command)
+                os.system(command)
+    # 比对, 添加期望的配置
+    insert_line_num = 1
+    if len(line_num_list) != 0:
+        insert_line_num = int(line_num_list[len(line_num_list) - 1])
+    for exp_server in exp_server_list:
+        if exp_server not in act_server_list:
+            if promised(green("未配置时间服务器'%s', 是否配置 ? " % exp_server)):
+                os.system("sed -i '%da server %s iburst' /etc/chrony.conf" % (insert_line_num, exp_server))
 
 
 if __name__ == "__main__":
@@ -139,12 +171,17 @@ if __name__ == "__main__":
     print(os_dict)
 
     # yum代理
+    print(green("1.yum代理配置 ................................................................................."))
     yum_proxy_conf(os_dict['yum.proxy'], os_dict['yum.proxy.username'], os_dict['yum.proxy.password'])
 
     # 软件安装
+    print(green("2.软件安装 ...................................................................................."))
     software_install()
 
     # DNS配置
+    print(green("3.DNS配置 ....................................................................................."))
     modify_dns_conf_optional(os_dict['name.servers'])
 
     # TODO 系统时间同步
+    print(green("4.系统时间同步 ................................................................................."))
+    sync_system_time(os_dict['chrony.servers'])
