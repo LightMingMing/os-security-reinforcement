@@ -166,6 +166,19 @@ def sync_system_time(chrony_server_conf):
                 os.system("sed -i '%da server %s iburst' /etc/chrony.conf" % (insert_line_num, exp_server))
 
 
+def set_system_timezone():
+    """查看当前时区, 不是Asia/Shanghai则进行修改"""
+    zone_ctx = execute_command("timedatectl status | grep zone")
+    print(green("当前时区"))
+    print(zone_ctx)
+    if zone_ctx.find('Asia/Shanghai') == -1:
+        if promised(green("当前时区非'Asia/Shanghai', 是否进行配置 ? ")):
+            os.system("timedatectl set-timezone Asia/Shanghai")
+            os.system("chronyc -a makestep")
+    else:
+        print(green("时区配置正确, 不需要更改"))
+
+
 if __name__ == "__main__":
     os_dict = read_os_conf()
     print(os_dict)
@@ -182,6 +195,10 @@ if __name__ == "__main__":
     print(green("3.DNS配置 ....................................................................................."))
     modify_dns_conf_optional(os_dict['name.servers'])
 
-    # TODO 系统时间同步
-    print(green("4.系统时间同步 ................................................................................."))
+    # 系统时间同步
+    print(green("4.系统时间同步 ................................................................................"))
     sync_system_time(os_dict['chrony.servers'])
+
+    # 时区设置
+    print(green("5.时区设置 ...................................................................................."))
+    set_system_timezone()
