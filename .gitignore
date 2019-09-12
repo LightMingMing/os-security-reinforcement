@@ -3,3 +3,6 @@
 *.pyc
 venv
 __pycache__
+
+# 不上传id_rsa.pub文件, 防信息泄露
+id_rsa.pub
