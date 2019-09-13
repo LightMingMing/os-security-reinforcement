@@ -244,6 +244,62 @@
     authpriv.*        /var/log/secure
     ```
 
+## 服务检测
+```shell
+# 端口及其服务检测
+# 使用netstat命令
+$ netstat -nlp -t -u
+Active Internet connections (only servers)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name
+tcp        0      0 0.0.0.0:111             0.0.0.0:*               LISTEN      1/systemd
+tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      11121/sshd
+tcp        0      0 127.0.0.1:45432         0.0.0.0:*               LISTEN      2042/postgres
+tcp        0      0 127.0.0.1:25            0.0.0.0:*               LISTEN      2147/master
+tcp        0      0 0.0.0.0:8834            0.0.0.0:*               LISTEN      2027/nessusd
+tcp        0      0 0.0.0.0:13443           0.0.0.0:*               LISTEN      2341/opsrv
+tcp6       0      0 :::111                  :::*                    LISTEN      1/systemd
+tcp6       0      0 :::22                   :::*                    LISTEN      11121/sshd
+tcp6       0      0 ::1:45432               :::*                    LISTEN      2042/postgres
+tcp6       0      0 ::1:25                  :::*                    LISTEN      2147/master
+tcp6       0      0 :::8834                 :::*                    LISTEN      2027/nessusd
+udp        0      0 0.0.0.0:68              0.0.0.0:*                           31663/dhclient
+udp        0      0 0.0.0.0:111             0.0.0.0:*                           1/systemd
+udp        0      0 127.0.0.1:323           0.0.0.0:*                           6659/chronyd
+udp        0      0 0.0.0.0:926             0.0.0.0:*                           7959/rpcbind
+udp6       0      0 :::111                  :::*                                1/systemd
+udp6       0      0 ::1:323                 :::*                                6659/chronyd
+udp6       0      0 :::926                  :::*                                7959/rpcbind
+
+# 使用nmap端口扫描工具
+nmap -sT -sU -p1-65535 -O localhost
+
+Starting Nmap 6.40 ( http://nmap.org ) at 2019-09-13 16:00 CST
+Nmap scan report for localhost (127.0.0.1)
+Host is up (0.000028s latency).
+Other addresses for localhost (not scanned): 127.0.0.1
+Not shown: 131059 closed ports
+PORT      STATE         SERVICE
+22/tcp    open          ssh
+25/tcp    open          smtp
+111/tcp   open          rpcbind
+4605/tcp  open          unknown
+8834/tcp  open          unknown
+13443/tcp open          unknown
+45432/tcp open          unknown
+68/udp    open|filtered dhcpc
+111/udp   open          rpcbind
+323/udp   open|filtered unknown
+926/udp   open|filtered unknown
+Device type: general purpose
+Running: Linux 3.X
+OS CPE: cpe:/o:linux:linux_kernel:3
+OS details: Linux 3.7 - 3.9
+Network Distance: 0 hops
+
+OS detection performed. Please report any incorrect results at http://nmap.org/submit/ .
+Nmap done: 1 IP address (1 host up) scanned in 9.48 seconds
+```
+
 ## 参考链接
 1. [使用NetworkManager命令行工具NMCLI](https://access.redhat.com/documentation/zh-cn/red_hat_enterprise_linux/7/html/networking_guide/sec-using_the_networkmanager_command_line_tool_nmcli)
 2. [Linux查看修改DNS配置](https://www.cnblogs.com/kerrycode/p/5407635.html)

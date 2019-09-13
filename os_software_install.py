@@ -188,6 +188,30 @@ def password_less_login():
         print(red("免密登录, 没有找到'id_rsa.pub'文件"))
 
 
+def service_probes():
+    service_ctx = execute_command('netstat -nlp -t -u')
+    print(service_ctx)
+    lines = service_ctx.splitlines()
+    port_to_server_dict = {}
+    for line in lines:
+        arr = []
+        if line.startswith('tcp'):
+            arr = re.split(" +", line, 6)
+        elif line.startswith('udp'):
+            arr = re.split(" +", line, 5)
+        if len(arr) != 0:
+            local_address = arr[3]
+            pid_and_name = arr[-1]
+            port = local_address[local_address.rfind(':') + 1:]
+            port_to_server_dict[port] = pid_and_name
+    for port in port_to_server_dict:
+        pid_and_name = port_to_server_dict[port]
+        pid = pid_and_name[:pid_and_name.find('/')]
+        name = pid_and_name[pid_and_name.find('/') + 1:]
+        print("端口: %s 进程ID：%s 服务名:%s" % (port, pid, name))
+        # TODO kill 关闭服务?
+
+
 if __name__ == "__main__":
     os_dict = read_os_conf()
     print(os_dict)
@@ -215,3 +239,7 @@ if __name__ == "__main__":
     # 免密登录
     print(green("6.免密登录 ...................................................................................."))
     password_less_login()
+
+    # 服务检测
+    print(green("7.服务检测 ...................................................................................."))
+    service_probes()
