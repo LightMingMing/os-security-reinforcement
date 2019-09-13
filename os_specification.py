@@ -13,7 +13,7 @@ from color import red, yellow, green
 class Spec(object):
     """配置规范"""
 
-    def __init__(self, desc, file_path, key, exp_val, interval=" ", pattern_split=" +", num_split=2):
+    def __init__(self, desc, file_path, key, exp_val, interval=" ", pattern_split=" +", num_split=1):
         """
         初始化一个配置项, 并检测
         :param desc: 描述
@@ -22,7 +22,7 @@ class Spec(object):
         :param exp_val: 期望值
         :param interval: 间隔符
         :param pattern_split: 将配置分割获取实际值'rel_val'的正则表达式, 默认按照多个空格分隔即" +"
-        :param num_split: 分割数量, 默认2个
+        :param num_split: 分割次数, 默认1次
         """
         self._desc = desc
         self._file_path = file_path
@@ -88,7 +88,7 @@ class Spec(object):
                 self._line_num += 1
                 if self._pattern_prefix.match(str(line)):
                     arr = self._pattern_split.split(str(line), self._num_split)
-                    self._act_val = arr[self._num_split - 1]
+                    self._act_val = arr[self._num_split]  # arr[-1]
                     if self._exp_val == self._act_val:
                         # 期望配置
                         self._status = 1

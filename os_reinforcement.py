@@ -81,12 +81,12 @@ if __name__ == "__main__":
         Spec("TCP快速回收TIME-WAIT状态的sockets", "/etc/sysctl.conf", "net.ipv4.tcp_tw_recycle", "0", " = ", " *= *"),
         Spec("TCP连接空闲至发送第一次探针的时间间隔", "/etc/sysctl.conf", "net.ipv4.tcp_keepalive_time", "600", " = ", " *= *")]
     # 进程数
-    proc_specs = [Spec("打开文件数", "/etc/security/limits.conf", "*  -  nofile", "65536", " ", " +", 4)]
+    proc_specs = [Spec("打开文件数", "/etc/security/limits.conf", "*  -  nofile", "65536", " ", " +", 3)]
     files = ls('/etc/security/limits.d/*-nproc.conf')
     for filepath in files:
         filename = filepath[filepath.rfind('/') + 1:]
-        proc_specs.append(Spec("普通用户创建进程数(" + filename + ")", filepath, "* soft nproc", "5120", " ", " +", 4))
-        proc_specs.append(Spec("root用户创建进程数(" + filename + ")", filepath, "root soft nproc", "unlimited", " ", " +", 4))
+        proc_specs.append(Spec("普通用户创建进程数(" + filename + ")", filepath, "* soft nproc", "5120", " ", " +", 3))
+        proc_specs.append(Spec("root用户创建进程数(" + filename + ")", filepath, "root soft nproc", "unlimited", " ", " +", 3))
     # 账户安全
     account_specs = [
         Spec("超时时间", "/etc/profile", "export TMOUT", "180", "=", "="),
