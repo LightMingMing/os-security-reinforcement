@@ -302,8 +302,8 @@ Nmap done: 1 IP address (1 host up) scanned in 9.48 seconds
 
 ## firewall-cmd 命令
 ```shell
-# 开启firewall-cmd
-$ systemctl start firewall-cmd 
+# 开启firewalld服务
+$ systemctl start firewalld
 
 # 允许服务通过
 $ firewall-cmd --add-service=zabbix-agent --permanent
@@ -336,7 +336,7 @@ success
 # 查询服务端口及协议
 $ firewall-cmd --service=chronyd --get-ports --permanent
 323/tcp 323/udp
-# 重新加载, 不然仍会说服务无效
+# 重新加载, 不然服务仍会无效
 $ firewall-cmd --reload
 success
 # 允许通过, 返回成功

@@ -216,8 +216,44 @@ def service_probes_and_shutdown_optional():
         name = pid_and_name[pid_and_name.find('/') + 1:]
         print("端口: %s 进程ID：%s 服务名: %s" % (port, pid, name))
         if port != "323" and port != "22":
-            if promised('是否关闭该服务'):
+            if promised('是否关闭该服务 ? '):
                 os.system("kill -15 %s" % pid)
+
+
+def firewall_service_management():
+    """防火墙服务管理"""
+    # 启动防火墙
+    os.system('systemctl start firewalld')
+    # 查看允许的服务
+    act_service_list = execute_command('firewall-cmd --list-services')[0:-1].split(" ")
+    print(green("实际允许的服务:"))
+    print(act_service_list)
+    exp_service_list = ['ssh', 'zabbix-agent', 'chronyd']
+    need_reload = False
+    # 删除非期望的服务
+    for act_service in act_service_list:
+        if act_service not in exp_service_list and len(act_service) > 0:
+            if promised(green("是否删除'%s'服务 ? " % act_service)):
+                os.system('firewall-cmd --remove-service=%s --permanent' % act_service)
+                need_reload = True
+    # 添加期望的服务
+    for exp_service in exp_service_list:
+        if exp_service not in act_service_list:
+            if promised(green("是否添加'%s'服务 ? " % exp_service)):
+                if exp_service == 'chronyd':
+                    # 自定义服务
+                    os.system('firewall-cmd --new-service=chronyd --permanent')
+                    os.system('firewall-cmd --service=chronyd --add-port=323/tcp --permanent')
+                    os.system('firewall-cmd --service=chronyd --add-port=323/udp --permanent')
+                    # 重新加载, 不然仍会服务无效
+                    os.system('firewall-cmd --reload')
+                    # 添加
+                    os.system('firewall-cmd --add-service=chronyd --permanent')
+                else:
+                    os.system("firewall-cmd --add-service=%s --permanent" % exp_service)
+                need_reload = True
+    if need_reload:
+        os.system('firewall-cmd --reload')
 
 
 if __name__ == "__main__":
@@ -251,3 +287,7 @@ if __name__ == "__main__":
     # 服务检测
     print(green("7.服务检测 ...................................................................................."))
     service_probes_and_shutdown_optional()
+
+    # 防火墙
+    print(green("8.防火墙服务管理 .............................................................................."))
+    firewall_service_management()
