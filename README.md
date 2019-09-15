@@ -300,6 +300,49 @@ OS detection performed. Please report any incorrect results at http://nmap.org/s
 Nmap done: 1 IP address (1 host up) scanned in 9.48 seconds
 ```
 
+## firewall-cmd 命令
+```shell
+# 开启firewall-cmd
+$ systemctl start firewall-cmd 
+
+# 允许服务通过
+$ firewall-cmd --add-service=zabbix-agent --permanent
+success
+
+加上--permanent是永久生效, 不然firewall-cmd --reload之后, 改变无效
+
+# 查看允许通过的服务
+$ firewall-cmd --list-services
+ssh dhcpv6-client zabbix-agent
+
+# 禁止服务通过
+$ firewall-cmd --remove-service=dhcpv6-client --permanent
+success
+
+# 查看默认服务
+$ firewall-cmd --get-services
+mysql redis ssh telnet zabbix-agent zabbix-server ...(没有chronyd)
+
+$ firewall-cmd --add-service=chronyd --permanent
+Error: INVALID_SERVICE: chronyd
+
+# 自定义服务 
+$ firewall-cmd --new-service=chronyd --permanent
+success
+$ firewall-cmd --service=chronyd --add-port=323/tcp --permanent
+success
+$ firewall-cmd --service=chronyd --add-port=323/udp --permanent
+success
+# 查询服务端口及协议
+$ firewall-cmd --service=chronyd --get-ports --permanent
+323/tcp 323/udp
+# 重新加载, 不然仍会说服务无效
+$ firewall-cmd --reload
+success
+# 允许通过, 返回成功
+firewall-cmd --add-service=chronyd --permanent
+success
+```
 ## 参考链接
 1. [使用NetworkManager命令行工具NMCLI](https://access.redhat.com/documentation/zh-cn/red_hat_enterprise_linux/7/html/networking_guide/sec-using_the_networkmanager_command_line_tool_nmcli)
 2. [Linux查看修改DNS配置](https://www.cnblogs.com/kerrycode/p/5407635.html)
