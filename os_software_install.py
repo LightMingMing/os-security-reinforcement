@@ -54,15 +54,20 @@ def yum_proxy_conf(proxy, proxy_username="", proxy_password=""):
         modify_optional(yum_specs)
 
 
-def software_install():
-    os.system('yum install vim')
-    os.system('yum install gcc')
-    os.system('yum install telnet')
-    os.system('yum install tar')
-    os.system('yum install zip')
-    os.system('yum install lvm2')
-    os.system('yum install firewalld')
-    os.system('yum install bind-utils')  # nslookup
+def yum_install(name):
+    print(green("准备安装'%s'......" % name))
+    os.system("yum install %s" % name)
+
+
+def install_all_required_software():
+    yum_install('vim')
+    yum_install('gcc')
+    yum_install('telnet')
+    yum_install('tar')
+    yum_install('zip')
+    yum_install('lvm2')
+    yum_install('firewalld')
+    yum_install('bind-utils')  # nslookup
     """
     os.system('yum install iftop')  # TODO
     os.system('yum install iperf3')  # TODO
@@ -85,12 +90,13 @@ def con_uuid_list():
     con_ctx = execute_command("nmcli connection show")
     print(con_ctx)
     lines = con_ctx.splitlines()
-    uuid_head_idx = lines[0].find("UUID")
-    for line in lines:
-        uuid_tail_idx = line.find(" ", uuid_head_idx)
-        uuid = line[uuid_head_idx:uuid_tail_idx]
-        if uuid != "UUID":
-            uuid_list.append(uuid)
+    if len(lines) > 0:
+        uuid_head_idx = lines[0].find("UUID")
+        for line in lines:
+            uuid_tail_idx = line.find(" ", uuid_head_idx)
+            uuid = line[uuid_head_idx:uuid_tail_idx]
+            if uuid != "UUID":
+                uuid_list.append(uuid)
     return uuid_list
 
 
@@ -188,7 +194,7 @@ def password_less_login():
         print(red("免密登录, 没有找到'id_rsa.pub'文件"))
 
 
-def service_probes():
+def service_probes_and_shutdown_optional():
     service_ctx = execute_command('netstat -nlp -t -u')
     print(service_ctx)
     lines = service_ctx.splitlines()
@@ -208,8 +214,10 @@ def service_probes():
         pid_and_name = port_to_server_dict[port]
         pid = pid_and_name[:pid_and_name.find('/')]
         name = pid_and_name[pid_and_name.find('/') + 1:]
-        print("端口: %s 进程ID：%s 服务名:%s" % (port, pid, name))
-        # TODO kill 关闭服务?
+        print("端口: %s 进程ID：%s 服务名: %s" % (port, pid, name))
+        if port != "323" and port != "22":
+            if promised('是否关闭该服务'):
+                os.system("kill -15 %s" % pid)
 
 
 if __name__ == "__main__":
@@ -222,7 +230,7 @@ if __name__ == "__main__":
 
     # 软件安装
     print(green("2.软件安装 ...................................................................................."))
-    software_install()
+    install_all_required_software()
 
     # DNS配置
     print(green("3.DNS配置 ....................................................................................."))
@@ -242,4 +250,4 @@ if __name__ == "__main__":
 
     # 服务检测
     print(green("7.服务检测 ...................................................................................."))
-    service_probes()
+    service_probes_and_shutdown_optional()
