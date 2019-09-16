@@ -343,6 +343,33 @@ success
 firewall-cmd --add-service=chronyd --permanent
 success
 ```
+
+## 软件安装
+个别软件使用`yum`安装不成功, 诸如`iftop`, `iperf`等软件
+
+可以采用如下方式, 以`iftop`为例:
+1. 从[http://download-i01.dedoraproject.org/pub/epel/6/x86_64](http://download-i01.dedoraproject.org/pub/epel/6/x86_64)下载
+最新发布的rpm包
+2. 安装rpm包
+    ```shell
+    $ rpm -Uvh epel-release*rpm
+    ```
+3. 安装iftop rpm包
+    ```iftop
+    $ yum install iftop
+    ```
+ 
+这里为了防止网络不通的情况, 提前将`iftop`, `iperf`的rmp包下载下来, 进行安装.
+
+CentOS操作系统版本
+```shell
+$ rpm -q centos-release
+centos-release-7-6.1810.2.el7.centos.x86_64
+$ rpm -q centos-release
+centos-release-6-6.el6.centos.12.2.x86_64
+$ rpm -q centos-release | cut -d- -f3
+```
+   
 ## 参考链接
 1. [使用NetworkManager命令行工具NMCLI](https://access.redhat.com/documentation/zh-cn/red_hat_enterprise_linux/7/html/networking_guide/sec-using_the_networkmanager_command_line_tool_nmcli)
 2. [Linux查看修改DNS配置](https://www.cnblogs.com/kerrycode/p/5407635.html)

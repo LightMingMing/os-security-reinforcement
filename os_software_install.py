@@ -15,12 +15,11 @@ from color import green, red
 from os_specification import Spec, display_colorful, modify_optional, promised
 
 
-# TODO
 # 1. 配置yum源代理
 # 2. 安装各个所需软件, 需要确定各个软件的安装方式
 # 3. nmcli配置DNS服务器
 # 4. 系统时间同步，日期同步
-# 5. 系统兼容性 CentOS 6、CentOS 7、Ubuntu
+# 5. TODO 系统兼容性 CentOS 6、CentOS 7、Ubuntu
 
 # TODO 测试环境安装结果, 看看要怎么解决
 # iftop, iperf 安装不成功 需要EPEL安装源 yum install epel-release, 安装后还要配置可用的epel镜像 /etc/yum.repos.d/epel.repo
@@ -59,6 +58,52 @@ def yum_install(name):
     os.system("yum install %s" % name)
 
 
+def os_version():
+    rpm_cmd = execute_command('command -v rpm')
+    if len(rpm_cmd) > 0:
+        return int(execute_command('rpm -q centos-release | cut -d- -f3'))
+    # TODO 支持ubuntu版本
+    return 0
+
+
+def rpm_file_path(prefix, suffix):
+    files = os.listdir('rpm')
+    for f in files:
+        if f.startswith(prefix) and f.endswith(suffix):
+            return 'rpm/' + f
+    return ""
+
+
+def rpm_install_iftop():
+    os_v = os_version()
+    file_path = ""
+    if os_v == 7:
+        file_path = rpm_file_path("iftop", "el7.x86_64.rpm")
+    elif os_v == 6:
+        file_path = rpm_file_path("iftop", "el6.x86_64.rpm")
+    if file_path is not None and len(file_path) > 0:
+        if promised(green("是否安装'%s' ? " % file_path)):
+            execute_command('rpm -Uvh %s' % file_path)
+            yum_install('iftop')
+    else:
+        print(red("'iftop'安装包不存在"))
+
+
+def rpm_install_iperf():
+    os_v = os_version()
+    file_path = ""
+    if os_v == 7:
+        file_path = rpm_file_path("iperf", "el7.x86_64.rpm")
+    elif os_v == 6:
+        file_path = rpm_file_path("iperf", "el6.x86_64.rpm")
+    if file_path is not None and len(file_path) > 0:
+        if promised(green("是否安装'%s' ? " % file_path)):
+            execute_command('rpm -Uvh %s' % file_path)
+            yum_install('iperf')
+    else:
+        print(red("'iperf'安装包不存在"))
+
+
 def install_all_required_software():
     yum_install('vim')
     yum_install('gcc')
@@ -68,13 +113,11 @@ def install_all_required_software():
     yum_install('lvm2')
     yum_install('firewalld')
     yum_install('bind-utils')  # nslookup
-    """
-    os.system('yum install iftop')  # TODO
-    os.system('yum install iperf3')  # TODO
-    os.system('yum install nginx')  # TODO
-    os.system('yum install java')  # TODO
+    yum_install('java')
+    rpm_install_iftop()
+    rpm_install_iperf()
+    # TODO nginx
     # TODO zabbix
-    """
 
 
 def execute_command(command):
@@ -218,6 +261,9 @@ def service_probes_and_shutdown_optional():
         if port != "323" and port != "22":
             if promised('是否关闭该服务 ? '):
                 os.system("kill -15 %s" % pid)
+            # 有的服务可能关闭不了, 需要下面方式
+            # systemctl stop service
+            # systemctl disable service
 
 
 def firewall_service_management():
