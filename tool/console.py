@@ -9,7 +9,7 @@ def promised(msg="?", color=1):
     """
     向用户发起询问, 获取许可
     :param msg: 消息
-    :param color: 终端显示的颜色, 0系统颜色, 1绿色, 2黄色, 3红色, 其它系统颜色
+    :param color: 终端显示的颜色, 1绿色, 2黄色, 3红色, 0或其它控制台默认颜色,
     :return: 用户输入YES'、'yes'、'Y'或'y'返回True; 输入'NOT'、'not'、'N'或'n'返回False
     """
     promise = ""
@@ -22,8 +22,10 @@ def promised(msg="?", color=1):
         msg = yellow(msg)
     elif color == 3:
         msg = red(msg)
+    yes_list = ['YES', 'yes', 'Y', 'y']
+    not_list = ['NOT', 'not', 'N', 'n']
     try:
-        while promise not in ['YES', 'yes', 'Y', 'y', 'NOT', 'not', 'N', 'n']:
+        while promise not in yes_list and promise not in not_list:
             # TODO 这里Python2和Python3有些不一样
             # Python2 raw_input(msg)
             # Python3 input(msg)
@@ -31,7 +33,7 @@ def promised(msg="?", color=1):
     except KeyboardInterrupt:
         print("")
         exit(1)
-    if promise in ['yes', 'y']:
+    if promise in yes_list:
         return True
     else:
         return False
