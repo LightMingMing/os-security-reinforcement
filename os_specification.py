@@ -4,10 +4,10 @@
 Author: 赵明明
 """
 
-import os
 import re
 
-from color import red, yellow, green
+from tool.console import red, yellow, green, padding, promised
+from tool.sys import execute
 
 
 class Spec(object):
@@ -112,10 +112,7 @@ class Spec(object):
             command = "echo %s >> %s" % (self.standard_config(), self.file_path)
         else:
             return
-        print(command)
-        f = os.popen(command)
-        print(f.read())
-        f.close()
+        print(execute(command))
         self.validate()
 
 
@@ -129,61 +126,24 @@ def escape(s=""):
     return result
 
 
-def num_ascii(s):
-    n = 0
-    for c in range(len(s)):
-        if ord(s[c]) < 128:
-            n += 1
-    return n
-
-
-def len_padding(total_len, prefix):
-    if len('中') == 1:
-        return total_len - 2 * len(prefix) + num_ascii(prefix)  # python3
-    else:
-        return total_len - (2 * len(prefix) + num_ascii(prefix)) / 3  # python2
-
-
-def padding(total_len, prefix):
-    s = ""
-    for i in range(len_padding(total_len, prefix)):
-        s += "."
-    return s
-
-
-def display_colorful(specs, flags=True):
+def display_colorful(specs, newline_at_end=True):
     for spec in specs:
-        pad = padding(80, spec.desc)
+        pad = padding(spec.desc)
         if spec.status == -2:
-            print("%s %s [%s]" % (spec.desc, pad, red("文件不存在")))
+            print("%s [%s]" % (pad, red("文件不存在")))
         elif spec.status == -1:
-            print("%s %s [%s]" % (spec.desc, pad, red("配置错误, 期望'%s', 实际'%s'" % (spec.exp_val, spec.act_val))))
+            print("%s [%s]" % (pad, red("配置错误, 期望'%s', 实际'%s'" % (spec.exp_val, spec.act_val))))
         elif spec.status == 0:
-            print("%s %s [%s]" % (spec.desc, pad, yellow("未配置")))
+            print("%s [%s]" % (pad, yellow("未配置")))
         elif spec.status == 1:
-            print("%s %s [%s]" % (spec.desc, pad, green("配置正确")))
-    if flags:
+            print("%s [%s]" % (pad, green("配置正确")))
+    if newline_at_end:
         print("")
-
-
-def promised(msg):
-    promise = ""
-    try:
-        while promise not in ['yes', 'y', 'not', 'n']:
-            # TODO Python2(raw_input) Python3(input)
-            promise = str(raw_input(msg))
-    except KeyboardInterrupt:
-        print("")
-        exit(1)
-    if promise in ['yes', 'y']:
-        return True
-    else:
-        return False
 
 
 def modify_optional(specs):
     for spec in specs:
         if spec.status == -1 or spec.status == 0:
             display_colorful([spec], False)
-            if promised(green("是否修复 ? ")):
+            if promised("是否修复 ? "):
                 spec.modify()

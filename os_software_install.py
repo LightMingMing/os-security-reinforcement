@@ -10,10 +10,10 @@ Author: 赵明明
 
 import os
 import re
-import socket
 
-from color import green, red
-from os_specification import Spec, display_colorful, modify_optional, promised
+from tool.console import green, red, promised, padding, info
+from tool.sys import get_host, execute, os_version
+from os_specification import Spec, display_colorful, modify_optional
 
 
 def read_os_conf():
@@ -50,19 +50,6 @@ def yum_install(name):
     os.system("yum install %s" % name)
 
 
-def os_version():
-    rpm_cmd = execute_command('command -v rpm')
-    if len(rpm_cmd) > 0:
-        return int(execute_command('rpm -q centos-release | cut -d- -f3'))
-    # TODO 支持ubuntu版本
-    return 0
-
-
-def hostname():
-    """获取主机ip"""
-    return socket.gethostbyname(socket.gethostname())
-
-
 def rpm_file_path(prefix, suffix):
     files = os.listdir('resources/rpm')
     for f in files:
@@ -88,8 +75,8 @@ def rpm_install_iftop():
     elif os_v == 6:
         file_path = rpm_file_path("iftop", "el6.x86_64.rpm")
     if file_path is not None and len(file_path) > 0:
-        if promised(green("是否安装'%s' ? " % file_path)):
-            execute_command('rpm -Uvh %s' % file_path)
+        if promised("是否安装'%s' ? " % file_path):
+            execute('rpm -Uvh %s' % file_path)
             yum_install('iftop')
     else:
         print(red("'iftop'安装包不存在"))
@@ -104,8 +91,8 @@ def rpm_install_iperf():
     elif os_v == 6:
         file_path = rpm_file_path("iperf", "el6.x86_64.rpm")
     if file_path is not None and len(file_path) > 0:
-        if promised(green("是否安装'%s' ? " % file_path)):
-            execute_command('rpm -Uvh %s' % file_path)
+        if promised("是否安装'%s' ? " % file_path):
+            execute('rpm -Uvh %s' % file_path)
             yum_install('iperf')
     else:
         print(red("'iperf'安装包不存在"))
@@ -141,23 +128,22 @@ def install_zabbix_agent():
         exp_val = os_dict['zabbix_agentd.ServerActive']
         specs.append(Spec('配置ServerActive', zabbix_conf_path, 'ServerActive', exp_val, '=', '='))
     # 配置hostname
-    ip = hostname()
+    ip = get_host()
     specs.append(Spec('配置Hostname', zabbix_conf_path, 'Hostname', ip, '=', '='))
     display_colorful(specs)
     modify_optional(specs)
-    display_colorful(specs)
 
     # 启动zabbix-agent
     startup_command = '/usr/local/zabbix/sbin/zabbix_agentd -c %s' % zabbix_conf_path
     if promised("是否启动'zabbix-agentd' ? "):
         os.system(startup_command)
     # 开机自启
-    if len(execute_command('cat /etc/rc.d/rc.local | grep /usr/local/zabbix/sbin/zabbix_agentd')) == 0:
+    if len(execute('cat /etc/rc.d/rc.local | grep /usr/local/zabbix/sbin/zabbix_agentd')) == 0:
         if promised('是否开机自启 ? '):
             os.system('chmod a+x /etc/rc.d/rc.local')
             os.system("echo '%s' >> /etc/rc.d/rc.local" % startup_command)
     else:
-        print(green('检测到配置开机自启...'))
+        print(green('检测到已配置开机自启...'))
     # 设置读权限
     os.system('setfacl -m u:zabbix:r /var/log/messages')
 
@@ -178,17 +164,10 @@ def install_all_required_software():
     # TODO nginx
 
 
-def execute_command(command):
-    f_open = os.popen(command)
-    output = f_open.read()
-    f_open.close()
-    return output
-
-
 def con_uuid_list():
     """系统连接的uuid集合"""
     uuid_list = []
-    con_ctx = execute_command("nmcli connection show")
+    con_ctx = execute("nmcli connection show")
     print(con_ctx)
     lines = con_ctx.splitlines()
     if len(lines) > 0:
@@ -207,7 +186,7 @@ def modify_dns_conf_optional(dns_conf):
     print(exp_dns_list)
 
     # 查询当前配置的DNS
-    dns_ctx = execute_command("nmcli dev show | grep IP4.DNS")
+    dns_ctx = execute("nmcli dev show | grep IP4.DNS")
     act_dns_list = []
     for act_dns in dns_ctx.splitlines():
         act_dns_list.append(re.split(" +", act_dns, 2)[1])
@@ -225,7 +204,7 @@ def modify_dns_conf_optional(dns_conf):
     if need_modify:
         # 修改连接的DNS, 并生效
         for uuid in con_uuid_list():
-            if promised(green("是否修改连接'%s'的DNS ? " % uuid)):
+            if promised("是否修改连接'%s'的DNS ? " % uuid):
                 os.system("nmcli connection modify %s ipv4.dns \"%s\"" % (uuid, dns_conf))
                 os.system("nmcli connection up %s" % uuid)
     else:
@@ -243,7 +222,7 @@ def sync_system_time(chrony_server_conf):
     print('期望时间服务器配置:')
     print(exp_server_list)
 
-    chr_ctx = execute_command("cat /etc/chrony.conf | grep -n '^server'")  # -n 显示行号
+    chr_ctx = execute("cat /etc/chrony.conf | grep -n '^server'")  # -n 显示行号
     line_num_list = []
     act_server_list = []
     for line in chr_ctx.splitlines():
@@ -258,7 +237,7 @@ def sync_system_time(chrony_server_conf):
     for idx in range(len(act_server_list)):
         act_server = act_server_list[idx]
         if act_server not in exp_server_list:
-            if promised(green("不期望的时间服务器'%s', 是否需要将其注释 ? " % act_server)):
+            if promised("不期望的时间服务器'%s', 是否需要将其注释 ? " % act_server):
                 line_num = line_num_list[idx]
                 command = "sed -i '%ss/^/# /' /etc/chrony.conf" % line_num
                 print(command)
@@ -269,17 +248,17 @@ def sync_system_time(chrony_server_conf):
         insert_line_num = int(line_num_list[len(line_num_list) - 1])
     for exp_server in exp_server_list:
         if exp_server not in act_server_list:
-            if promised(green("未配置时间服务器'%s', 是否配置 ? " % exp_server)):
+            if promised("未配置时间服务器'%s', 是否配置 ? " % exp_server):
                 os.system("sed -i '%da server %s iburst' /etc/chrony.conf" % (insert_line_num, exp_server))
 
 
 def set_system_timezone():
     """查看当前时区, 不是Asia/Shanghai则进行修改"""
-    zone_ctx = execute_command("timedatectl status | grep zone")
+    zone_ctx = execute("timedatectl status | grep zone")
     print("当前时区")
     print(zone_ctx)
     if zone_ctx.find('Asia/Shanghai') == -1:
-        if promised(green("当前时区非'Asia/Shanghai', 是否进行配置 ? ")):
+        if promised("当前时区非'Asia/Shanghai', 是否进行配置 ? "):
             os.system("timedatectl set-timezone Asia/Shanghai")
             os.system("chronyc -a makestep")
     else:
@@ -288,7 +267,7 @@ def set_system_timezone():
 
 def password_less_login():
     if os.path.exists('resources/id_rsa.pub'):
-        if promised(green("是否进行免密登录配置 ? ")):
+        if promised("是否进行免密登录配置 ? "):
             os.system("mkdir -p ~/.ssh && chmod 700 ~/.ssh")
             os.system("cat id_rsa.pub | cat >> ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys")
     else:
@@ -296,7 +275,7 @@ def password_less_login():
 
 
 def service_probes_and_shutdown_optional():
-    service_ctx = execute_command('netstat -nlp -t -u')
+    service_ctx = execute('netstat -nlp -t -u')
     print(service_ctx)
     lines = service_ctx.splitlines()
     port_to_server_dict = {}
@@ -329,7 +308,7 @@ def firewall_service_management():
     # 启动防火墙
     os.system('systemctl start firewalld')
     # 查看允许的服务
-    act_service_list = execute_command('firewall-cmd --list-services')[0:-1].split(" ")
+    act_service_list = execute('firewall-cmd --list-services')[0:-1].split(" ")
     print(green("实际允许的服务:"))
     print(act_service_list)
     exp_service_list = ['ssh', 'zabbix-agent', 'chronyd']
@@ -337,13 +316,13 @@ def firewall_service_management():
     # 删除非期望的服务
     for act_service in act_service_list:
         if act_service not in exp_service_list and len(act_service) > 0:
-            if promised(green("是否删除'%s'服务 ? " % act_service)):
+            if promised("是否删除'%s'服务 ? " % act_service):
                 os.system('firewall-cmd --remove-service=%s --permanent' % act_service)
                 need_reload = True
     # 添加期望的服务
     for exp_service in exp_service_list:
         if exp_service not in act_service_list:
-            if promised(green("是否添加'%s'服务 ? " % exp_service)):
+            if promised("是否添加'%s'服务 ? " % exp_service):
                 if exp_service == 'chronyd':
                     # 自定义服务
                     os.system('firewall-cmd --new-service=chronyd --permanent')
@@ -364,33 +343,33 @@ if __name__ == "__main__":
     print(os_dict)
 
     # yum代理
-    print(green("1.yum代理配置 ................................................................................."))
+    info(padding("1.yum代理配置"))
     yum_proxy_conf(os_dict['yum.proxy'], os_dict['yum.proxy.username'], os_dict['yum.proxy.password'])
 
     # 软件安装
-    print(green("2.软件安装 ...................................................................................."))
+    info(padding("2.软件安装"))
     install_all_required_software()
 
     # DNS配置
-    print(green("3.DNS配置 ....................................................................................."))
+    info(padding("3.DNS配置"))
     modify_dns_conf_optional(os_dict['name.servers'])
 
     # 系统时间同步
-    print(green("4.系统时间同步 ................................................................................"))
+    info(padding("4.系统时间同步"))
     sync_system_time(os_dict['chrony.servers'])
 
     # 时区设置
-    print(green("5.时区设置 ...................................................................................."))
+    info(padding("5.时区设置"))
     set_system_timezone()
 
     # 免密登录
-    print(green("6.免密登录 ...................................................................................."))
+    info(padding("6.免密登录"))
     password_less_login()
 
     # 服务检测
-    print(green("7.服务检测 ...................................................................................."))
+    info(padding("7.服务检测"))
     service_probes_and_shutdown_optional()
 
     # 防火墙
-    print(green("8.防火墙服务管理 .............................................................................."))
+    info(padding("8.防火墙服务管理"))
     firewall_service_management()

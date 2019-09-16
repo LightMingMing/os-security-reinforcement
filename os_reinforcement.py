@@ -5,12 +5,8 @@ Author: 赵明明
 """
 import os
 
-from color import green, red
-from os_specification import Spec, display_colorful, padding, modify_optional
-
-
-def info(msg):
-    print(green(msg))
+from tool.console import green, red, padding, info
+from os_specification import Spec, display_colorful, modify_optional
 
 
 def password_check():
@@ -18,7 +14,7 @@ def password_check():
     口令检测 /etc/shadow
     """
     prefix = "口令检测"
-    pad = padding(80, prefix)
+    pad = padding(prefix)
     try:
         f = open("/etc/shadow", "rb")
         context = f.read()
@@ -28,14 +24,14 @@ def password_check():
             arr = line.split(b":")
             if arr[1] == "":
                 correct = False
-                print("%s %s [%s]" % (prefix, pad, red("'%s'密码为空" % arr[0])))
+                print("%s [%s]" % (pad, red("'%s'密码为空" % arr[0])))
             elif arr[2] == "0":
                 correct = False
-                print("%s %s [%s]" % (prefix, pad, red("'%s'UID为0" % arr[0])))
+                print("%s [%s]" % (pad, red("'%s'UID为0" % arr[0])))
         if correct:
-            print("%s %s [%s]" % (prefix, pad, green("通过")))
+            print("%s [%s]" % (pad, green("通过")))
     except IOError:
-        print("%s %s [%s]" % (prefix, pad, red("文件不存在")))
+        print("%s [%s]" % (pad, red("文件不存在")))
 
 
 def path_check():
@@ -45,9 +41,9 @@ def path_check():
     path = str(os.environ.get("PATH"))
     prefix = "系统路径检测"
     if path.find('.:') == -1:
-        print("%s %s [%s]" % (prefix, padding(80, prefix), green("通过")))
+        print("%s [%s]" % (padding(prefix), green("通过")))
     else:
-        print("%s %s [%s]" % (prefix, padding(80, prefix), red("不通过")))
+        print("%s [%s]" % (padding(prefix), red("不通过")))
 
 
 def ls(pattern_file):
