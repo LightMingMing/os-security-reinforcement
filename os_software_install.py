@@ -149,12 +149,15 @@ def install_zabbix_agent():
 
     # 启动zabbix-agent
     startup_command = '/usr/local/zabbix/sbin/zabbix_agentd -c %s' % zabbix_conf_path
-    if promised('是否启动zabbix-agentd'):
+    if promised("是否启动'zabbix-agentd' ? "):
         os.system(startup_command)
-    if promised('是否开机自启'):
-        # TODO 幂等性
-        os.system('chmod a+x /etc/rc.d/rc.local')
-        os.system("echo '%s' >> /etc/rc.d/rc.local" % startup_command)
+    # 开机自启
+    if len(execute_command('cat /etc/rc.d/rc.local | grep /usr/local/zabbix/sbin/zabbix_agentd')) == 0:
+        if promised('是否开机自启 ? '):
+            os.system('chmod a+x /etc/rc.d/rc.local')
+            os.system("echo '%s' >> /etc/rc.d/rc.local" % startup_command)
+    else:
+        print(green('检测到配置开机自启...'))
     # 设置读权限
     os.system('setfacl -m u:zabbix:r /var/log/messages')
 
