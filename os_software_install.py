@@ -10,22 +10,11 @@ Author: 赵明明
 
 import os
 import re
+import socket
 
 from color import green, red
 from os_specification import Spec, display_colorful, modify_optional, promised
 
-
-# 1. 配置yum源代理
-# 2. 安装各个所需软件, 需要确定各个软件的安装方式
-# 3. nmcli配置DNS服务器
-# 4. 系统时间同步，日期同步
-# 5. TODO 系统兼容性 CentOS 6、CentOS 7、Ubuntu
-
-# TODO 测试环境安装结果, 看看要怎么解决
-# iftop, iperf 安装不成功 需要EPEL安装源 yum install epel-release, 安装后还要配置可用的epel镜像 /etc/yum.repos.d/epel.repo
-# CentOS 7上可以安装iperf3
-# nginx安装不成功, 需要配置yum源? 还是直接wget下载压缩包
-# nginx, java 版本问题
 
 def read_os_conf():
     """读取配置文件"""
@@ -39,6 +28,9 @@ def read_os_conf():
         kv = os_conf.split("=", 2)
         os_conf_dict[kv[0]] = kv[1]
     return os_conf_dict
+
+
+os_dict = read_os_conf()
 
 
 def yum_proxy_conf(proxy, proxy_username="", proxy_password=""):
@@ -66,6 +58,11 @@ def os_version():
     return 0
 
 
+def hostname():
+    """获取主机ip"""
+    return socket.gethostbyname(socket.gethostname())
+
+
 def rpm_file_path(prefix, suffix):
     files = os.listdir('resources/rpm')
     for f in files:
@@ -74,7 +71,16 @@ def rpm_file_path(prefix, suffix):
     return ""
 
 
+def tar_file_path(prefix):
+    files = os.listdir('resources/tar')
+    for f in files:
+        if f.startswith(prefix):
+            return 'resources/tar/' + f
+    return ""
+
+
 def rpm_install_iftop():
+    print(green("准备安装'iftop'......"))
     os_v = os_version()
     file_path = ""
     if os_v == 7:
@@ -90,6 +96,7 @@ def rpm_install_iftop():
 
 
 def rpm_install_iperf():
+    print(green("准备安装'iperf'......"))
     os_v = os_version()
     file_path = ""
     if os_v == 7:
@@ -104,6 +111,54 @@ def rpm_install_iperf():
         print(red("'iperf'安装包不存在"))
 
 
+def install_zabbix_agent():
+    print(green("准备安装'zabbix-agent'......"))
+    # '/usr/local'目录下不存在'zabbix', 则进行解压
+    if not os.path.exists('/usr/local/zabbix'):
+        file_path = tar_file_path('zabbix_linux_2.6')
+        if len(file_path) > 0:
+            file_name = file_path[file_path.rfind('/') + 1:]
+            os.system('cp %s /usr/local' % file_path)
+            os.system('tar -xvf /usr/local/%s -C /usr/local' % file_name)
+        else:
+            print(red("'zabbix'安装包不存在"))
+            return
+    else:
+        print(green("文件'/usr/local/zabbix'已存在"))
+    os.system('groupadd zabbix')
+    os.system('useradd -g zabbix -M -s /sbin/nologin zabbix')
+    os.system('chown -R zabbix.zabbix /usr/local/zabbix')
+
+    zabbix_conf_path = '/usr/local/zabbix/conf/zabbix_agentd.conf'
+    print(green("检测'%s'配置文件......" % zabbix_conf_path))
+    specs = []
+    # Server配置
+    if 'zabbix_agentd.Server' in os_dict:
+        exp_val = os_dict['zabbix_agentd.Server']
+        specs.append(Spec('配置Server', zabbix_conf_path, 'Server', exp_val, '=', '='))
+    # ServerActive配置
+    if 'zabbix_agentd.ServerActive' in os_dict:
+        exp_val = os_dict['zabbix_agentd.ServerActive']
+        specs.append(Spec('配置ServerActive', zabbix_conf_path, 'ServerActive', exp_val, '=', '='))
+    # 配置hostname
+    ip = hostname()
+    specs.append(Spec('配置Hostname', zabbix_conf_path, 'Hostname', ip, '=', '='))
+    display_colorful(specs)
+    modify_optional(specs)
+    display_colorful(specs)
+
+    # 启动zabbix-agent
+    startup_command = '/usr/local/zabbix/sbin/zabbix_agentd -c %s' % zabbix_conf_path
+    if promised('是否启动zabbix-agentd'):
+        os.system(startup_command)
+    if promised('是否开机自启'):
+        # TODO 幂等性
+        os.system('chmod a+x /etc/rc.d/rc.local')
+        os.system("echo '%s' >> /etc/rc.d/rc.local" % startup_command)
+    # 设置读权限
+    os.system('setfacl -m u:zabbix:r /var/log/messages')
+
+
 def install_all_required_software():
     yum_install('vim')
     yum_install('gcc')
@@ -116,8 +171,8 @@ def install_all_required_software():
     yum_install('java')
     rpm_install_iftop()
     rpm_install_iperf()
+    install_zabbix_agent()
     # TODO nginx
-    # TODO zabbix
 
 
 def execute_command(command):
@@ -303,7 +358,6 @@ def firewall_service_management():
 
 
 if __name__ == "__main__":
-    os_dict = read_os_conf()
     print(os_dict)
 
     # yum代理

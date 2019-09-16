@@ -345,6 +345,8 @@ success
 ```
 
 ## 软件安装
+
+### 安装rpm包
 个别软件使用`yum`安装不成功, 诸如`iftop`, `iperf`等软件
 
 可以采用如下方式, 以`iftop`为例:
@@ -368,6 +370,29 @@ centos-release-7-6.1810.2.el7.centos.x86_64
 $ rpm -q centos-release
 centos-release-6-6.el6.centos.12.2.x86_64
 $ rpm -q centos-release | cut -d- -f3
+```
+
+### zabbix-agent安装
+```shell
+# 根据中伟提供的安装方式
+groupadd zabbix
+useradd -g zabbix -M -s /sbin/nologin zabbix
+cp zabbix_linux_2.6_agents20160913.tar  /usr/local/
+cd /usr/local
+tar -xvf zabbix_linux_2.6_agents20160913.tar
+chown -R zabbix.zabbix /usr/local/zabbix
+
+
+vi  /usr/local/zabbix/conf/zabbix_agentd.conf
+Server=*.*.*.*
+ServerActive=*.*.*.*
+Hostname=本机ip
+
+
+/usr/local/zabbix/sbin/zabbix_agentd -c /usr/local/zabbix/conf/zabbix_agentd.conf 
+chmod a+x /etc/rc.d/rc.local
+echo "/usr/local/zabbix/sbin/zabbix_agentd  -c  /usr/local/zabbix/conf/zabbix_agentd.conf" >>/etc/rc.d/rc.local 
+setfacl -m u:zabbix:r /var/log/messages
 ```
    
 ## 参考链接
