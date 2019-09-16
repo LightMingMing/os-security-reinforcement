@@ -30,7 +30,7 @@ from os_specification import Spec, display_colorful, modify_optional, promised
 def read_os_conf():
     """读取配置文件"""
     os_conf_dict = {}
-    os_conf_file = open("os.conf")
+    os_conf_file = open("resources/os.conf")
     os_conf_list = os_conf_file.read().splitlines()
     os_conf_file.close()
     for os_conf in os_conf_list:
@@ -67,10 +67,10 @@ def os_version():
 
 
 def rpm_file_path(prefix, suffix):
-    files = os.listdir('rpm')
+    files = os.listdir('resources/rpm')
     for f in files:
         if f.startswith(prefix) and f.endswith(suffix):
-            return 'rpm/' + f
+            return 'resources/rpm/' + f
     return ""
 
 
@@ -229,7 +229,7 @@ def set_system_timezone():
 
 
 def password_less_login():
-    if os.path.exists('id_rsa.pub'):
+    if os.path.exists('resources/id_rsa.pub'):
         if promised(green("是否进行免密登录配置 ? ")):
             os.system("mkdir -p ~/.ssh && chmod 700 ~/.ssh")
             os.system("cat id_rsa.pub | cat >> ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys")
