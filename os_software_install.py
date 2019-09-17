@@ -101,6 +101,11 @@ def install_zabbix_agent():
     os.system('setfacl -m u:zabbix:r /var/log/messages')
 
 
+def install_nginx():
+    if not os.path.exists('/usr/local/nginx') or promised(green("检测到nginx已安装, 是否覆盖安装")):
+        os.system('sh nginx_install.sh')
+
+
 def install_all_required_software():
     yum_install('vim')
     yum_install('gcc')
@@ -114,7 +119,7 @@ def install_all_required_software():
     rpm_install_iftop()
     rpm_install_iperf()
     install_zabbix_agent()
-    # TODO nginx
+    install_nginx()
 
 
 def con_uuid_list():
