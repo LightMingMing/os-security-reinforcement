@@ -22,11 +22,11 @@ cd ${nginx_path}/${pcre} && ./configure && make && make install
 cd ${nginx_path}/${openssl} && ./configure && make && make install
 
 cd ${nginx_path}/${nginx}
-patch -p1 < ../ngx_req_status-master/write_filter-1.7.11.patch
+patch -p1 <../ngx_req_status-master/write_filter-1.7.11.patch
 ./configure --prefix=/usr/local/nginx \
-            --with-openssl=${nginx_path}/${openssl} \
-            --with-pcre=${nginx_path}/${pcre} \
-            --with-zlib=${nginx_path}/${zlib} \
-            --with-http_ssl_module --with-http_stub_status_module \
-            --add-module=${nginx_path}/ngx_req_status-master
-make && make install')
+  --with-openssl=${nginx_path}/${openssl} \
+  --with-pcre=${nginx_path}/${pcre} \
+  --with-zlib=${nginx_path}/${zlib} \
+  --with-http_ssl_module --with-http_stub_status_module \
+  --add-module=${nginx_path}/ngx_req_status-master
+make && make install
