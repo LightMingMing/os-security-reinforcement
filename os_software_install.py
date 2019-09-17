@@ -11,24 +11,10 @@ Author: 赵明明
 import os
 import re
 
-from tool.console import green, red, promised, padding, info
-from tool.sys import get_host, execute, os_version
 from os_specification import Spec, display_colorful, modify_optional
-
-
-def read_os_conf():
-    """读取配置文件"""
-    os_conf_dict = {}
-    os_conf_file = open("resources/os.conf")
-    os_conf_list = os_conf_file.read().splitlines()
-    os_conf_file.close()
-    for os_conf in os_conf_list:
-        if os_conf.startswith('#') or os_conf.find("=") == -1:
-            continue
-        kv = os_conf.split("=", 2)
-        os_conf_dict[kv[0]] = kv[1]
-    return os_conf_dict
-
+from res import tar_file_path, rpm_file_path, read_os_conf
+from tool.console import green, red, promised, padding, info
+from tool.sys import get_host, execute
 
 os_dict = read_os_conf()
 
@@ -50,31 +36,10 @@ def yum_install(name):
     os.system("yum install %s" % name)
 
 
-def rpm_file_path(prefix, suffix):
-    files = os.listdir('resources/rpm')
-    for f in files:
-        if f.startswith(prefix) and f.endswith(suffix):
-            return 'resources/rpm/' + f
-    return ""
-
-
-def tar_file_path(prefix):
-    files = os.listdir('resources/tar')
-    for f in files:
-        if f.startswith(prefix):
-            return 'resources/tar/' + f
-    return ""
-
-
 def rpm_install_iftop():
     print(green("准备安装'iftop'......"))
-    os_v = os_version()
-    file_path = ""
-    if os_v == 7:
-        file_path = rpm_file_path("iftop", "el7.x86_64.rpm")
-    elif os_v == 6:
-        file_path = rpm_file_path("iftop", "el6.x86_64.rpm")
-    if file_path is not None and len(file_path) > 0:
+    file_path = rpm_file_path("iftop")
+    if len(file_path) > 0:
         if promised("是否安装'%s' ? " % file_path):
             execute('rpm -Uvh %s' % file_path)
             yum_install('iftop')
@@ -84,13 +49,8 @@ def rpm_install_iftop():
 
 def rpm_install_iperf():
     print(green("准备安装'iperf'......"))
-    os_v = os_version()
-    file_path = ""
-    if os_v == 7:
-        file_path = rpm_file_path("iperf", "el7.x86_64.rpm")
-    elif os_v == 6:
-        file_path = rpm_file_path("iperf", "el6.x86_64.rpm")
-    if file_path is not None and len(file_path) > 0:
+    file_path = rpm_file_path("iperf")
+    if len(file_path) > 0:
         if promised("是否安装'%s' ? " % file_path):
             execute('rpm -Uvh %s' % file_path)
             yum_install('iperf')
@@ -100,18 +60,11 @@ def rpm_install_iperf():
 
 def install_zabbix_agent():
     print(green("准备安装'zabbix-agent'......"))
-    # '/usr/local'目录下不存在'zabbix', 则进行解压
-    if not os.path.exists('/usr/local/zabbix'):
-        file_path = tar_file_path('zabbix_linux_2.6')
-        if len(file_path) > 0:
-            file_name = file_path[file_path.rfind('/') + 1:]
-            os.system('cp %s /usr/local' % file_path)
-            os.system('tar -xvf /usr/local/%s -C /usr/local' % file_name)
-        else:
-            print(red("'zabbix'安装包不存在"))
-            return
+    if os.path.exists('/usr/local/zabbix/'):
+        print(red("'/usr/local/zabbix/'文件已存在"))
     else:
-        print(green("文件'/usr/local/zabbix'已存在"))
+        file_path = tar_file_path('zabbix_linux_2.6')
+        os.system('tar -xvf %s -C /usr/local' % file_path)
     os.system('groupadd zabbix')
     os.system('useradd -g zabbix -M -s /sbin/nologin zabbix')
     os.system('chown -R zabbix.zabbix /usr/local/zabbix')
