@@ -14,7 +14,7 @@ import re
 from os_specification import Spec, display_colorful, modify_optional
 from res import tar_file_path, rpm_file_path, read_os_conf
 from tool.console import green, red, promised, padding, info
-from tool.sys import get_host, execute
+from tool.sys import get_host, execute, os_version
 
 os_dict = read_os_conf()
 
@@ -29,6 +29,11 @@ def yum_proxy_conf(proxy, proxy_username="", proxy_password=""):
             yum_specs.append(Spec("用户密码", "/etc/yum.conf", "proxy_password", proxy_password, "=", "="))
         display_colorful(yum_specs)
         modify_optional(yum_specs)
+
+
+def yum_base_repo_conf(host):
+    if promised("是否配置'CentOS-Base.repo'文件"):
+        os.system('sh shell/yum_base_repo_configure.sh %s %d' % (host, os_version()))
 
 
 def yum_install(name):
@@ -103,7 +108,7 @@ def install_zabbix_agent():
 
 def install_nginx():
     if not os.path.exists('/usr/local/nginx') or promised(green("检测到nginx已安装, 是否覆盖安装")):
-        os.system('sh nginx_install.sh')
+        os.system('sh shell/nginx_install.sh')
 
 
 def install_all_required_software():
@@ -303,6 +308,7 @@ if __name__ == "__main__":
     # yum代理
     info(padding("1.yum代理配置"))
     yum_proxy_conf(os_dict['yum.proxy'], os_dict['yum.proxy.username'], os_dict['yum.proxy.password'])
+    yum_base_repo_conf(os_dict['yum.base.repo.host'])
 
     # 软件安装
     info(padding("2.软件安装"))
