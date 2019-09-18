@@ -3,13 +3,17 @@
 系统相关
 Author: 赵明明
 """
-import socket
 import os
+import socket
 
 
 def get_host():
     """获取主机IP"""
-    return socket.gethostbyname(socket.gethostname())
+    try:
+        return socket.gethostbyname(socket.gethostname())
+    except IOError:
+        host = execute("ifconfig -a | grep inet | grep -v 127.0.0.1 | grep -v inet6 | awk '{print $2}'| tr -d 'addr:'")
+        return host[0:-1]
 
 
 def os_version():
