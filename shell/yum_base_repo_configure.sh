@@ -7,9 +7,6 @@ if [ -z "${host}" ]; then
   echo "Host is null"
 else
   if [[ ${v} -eq 6 || ${v} -eq 7 ]]; then
-    echo "............"
-    echo 's/{host}/'${host}'/g'
-    echo 's/{v}/'${v}'/g'
     cat resources/yum-base-template.repo | sed 's/{host}/'${host}'/g' | sed 's/{v}/'${v}'/g'
     cat resources/yum-base-template.repo | sed 's/{host}/'${host}'/g' | sed 's/{v}/'${v}'/g' >/etc/yum.repos.d/CentOS-Base.repo
   else
