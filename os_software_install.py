@@ -38,7 +38,7 @@ def yum_base_repo_conf(host):
 
 def yum_install(name):
     print(green("准备安装'%s'......" % name))
-    os.system("yum install %s" % name)
+    os.system("yum -y install %s" % name)
 
 
 def rpm_install_iftop():
@@ -113,10 +113,12 @@ def install_nginx():
 
 def install_all_required_software():
     yum_install('vim')
-    yum_install('gcc')
+    if promised(green("是否安装gcc(如果yum源有问题, 可以ctrl+c在此结束运行)")):
+        yum_install('gcc')
     yum_install('telnet')
     yum_install('tar')
     yum_install('zip')
+    yum_install('unzip')
     yum_install('lvm2')
     yum_install('firewalld')
     yum_install('bind-utils')  # nslookup
@@ -124,7 +126,8 @@ def install_all_required_software():
     rpm_install_iftop()
     rpm_install_iperf()
     install_zabbix_agent()
-    install_nginx()
+    if promised(green("是否安装nginx(安装时间较长, 没有必要可以不安装)")):
+        install_nginx()
 
 
 def con_uuid_list():
@@ -232,7 +235,7 @@ def password_less_login():
     if os.path.exists('resources/id_rsa.pub'):
         if promised("是否进行免密登录配置 ? "):
             os.system("mkdir -p ~/.ssh && chmod 700 ~/.ssh")
-            os.system("cat id_rsa.pub | cat >> ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys")
+            os.system("cat resources/id_rsa.pub | cat >> ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys")
     else:
         print(red("免密登录, 没有找到'id_rsa.pub'文件"))
 

@@ -6,6 +6,7 @@ Author: 赵明明
 import os
 
 from tool.console import green, red, padding, info
+from tool.sys import os_version
 from os_specification import Spec, display_colorful, modify_optional
 
 
@@ -94,13 +95,13 @@ if __name__ == "__main__":
     ssh_specs = [
         Spec("SSH协议版本", "/etc/ssh/sshd_config", "Protocol", "2"),
         Spec("SSH严格模式", "/etc/ssh/sshd_config", "StrictModes", "yes"),
-        Spec("不允许root用户SSH登录", "/etc/ssh/sshd_config", "PermitRootLogin", "no"),
+        # Spec("不允许root用户SSH登录", "/etc/ssh/sshd_config", "PermitRootLogin", "no"),
         Spec("SSH打印上次登录日志", "/etc/ssh/sshd_config", "PrintLastLog", "yes"),
         Spec("SSH不允许空密码", "/etc/ssh/sshd_config", "PermitEmptyPasswords", "no")]
     # 其它
     other_specs = [
-        Spec("输出历史命令记录数", "/etc/profile", "HISTSIZE", "2", "=", "="),
-        Spec("保留的历史命令总数", "/etc/profile", "HISTFILESIZE", "2", "=", "="),
+        # Spec("输出历史命令记录数", "/etc/profile", "HISTSIZE", "2", "=", "="),
+        # Spec("保留的历史命令总数", "/etc/profile", "HISTFILESIZE", "2", "=", "="),
         Spec("开启日志审核", "/etc/rsyslog.conf", "authpriv.*", "/var/log/secure")]
 
     # 展示结果
@@ -120,6 +121,11 @@ if __name__ == "__main__":
     modify_optional(ssh_specs)
     modify_optional(other_specs)
 
+    v = os_version()
+    if v == 7:
+        os.system("systemctl restart sshd")
+    elif v == 6:
+        os.system("service sshd restart")
     info("3. 展示修复结果 ................................................................................")
     # 再次展示
     display_colorful(dsn_specs)
