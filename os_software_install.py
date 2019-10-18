@@ -123,6 +123,7 @@ def install_all_required_software():
     yum_install('firewalld')
     yum_install('bind-utils')  # nslookup
     yum_install('java')
+    yum_install('libpcap') # Fix error "Failed dependencies" when install iftop in some machines
     rpm_install_iftop()
     rpm_install_iperf()
     install_zabbix_agent()
