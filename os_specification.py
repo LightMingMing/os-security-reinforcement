@@ -109,7 +109,7 @@ class Spec(object):
             # command = "sed -n '%dc %s' %s" % (self.line_num, self.standard_config(), self.file_path)
             command = "sed -i '%dc %s' %s" % (self.line_num, self.standard_config(), self.file_path)
         elif self.status == 0:
-            command = "echo %s >> %s" % (self.standard_config(), self.file_path)
+            command = "echo '%s' >> %s" % (self.standard_config(), self.file_path)
         else:
             return
         print(execute(command))
