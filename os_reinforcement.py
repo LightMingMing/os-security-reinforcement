@@ -66,7 +66,7 @@ if __name__ == "__main__":
     path_check()
 
     # DNS相关
-    dsn_specs = [
+    dns_specs = [
         Spec("域名解析顺序", "/etc/host.conf", "order", "local,bind4"),
         Spec("允许一个主机对应多个IP", "/etc/host.conf", "multi", "on"),
         Spec("禁止SSH使用域名服务", "/etc/ssh/sshd_config", "UseDNS", "yes")]
@@ -105,7 +105,7 @@ if __name__ == "__main__":
         Spec("开启日志审核", "/etc/rsyslog.conf", "authpriv.*", "/var/log/secure")]
 
     # 展示结果
-    display_colorful(dsn_specs)
+    display_colorful(dns_specs)
     display_colorful(net_specs)
     display_colorful(proc_specs)
     display_colorful(account_specs)
@@ -114,7 +114,7 @@ if __name__ == "__main__":
 
     info("2.安全配置修复 ................................................................................")
     # 进行修复
-    modify_optional(dsn_specs)
+    modify_optional(dns_specs)
     modify_optional(net_specs)
     modify_optional(proc_specs)
     modify_optional(account_specs)
@@ -128,7 +128,7 @@ if __name__ == "__main__":
         os.system("service sshd restart")
     info("3. 展示修复结果 ................................................................................")
     # 再次展示
-    display_colorful(dsn_specs)
+    display_colorful(dns_specs)
     display_colorful(net_specs)
     display_colorful(proc_specs)
     display_colorful(account_specs)
