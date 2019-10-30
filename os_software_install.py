@@ -123,7 +123,7 @@ def install_all_required_software():
     yum_install('firewalld')
     yum_install('bind-utils')  # nslookup
     yum_install('java')
-    yum_install('libpcap') # Fix error "Failed dependencies" when install iftop in some machines
+    yum_install('libpcap')  # Fix error "Failed dependencies" when install iftop in some machines
     rpm_install_iftop()
     rpm_install_iperf()
     install_zabbix_agent()
@@ -176,6 +176,34 @@ def modify_dns_conf_optional(dns_conf):
                 os.system("nmcli connection up %s" % uuid)
     else:
         print("DNS配置正确, 不需要更改")
+
+
+def modify_resolv_conf(dns_conf):
+    exp_dns_list = re.split(" +", dns_conf)
+    print("期望DNS配置:")
+    print(exp_dns_list)
+
+    act_dns_list = []
+    resolv_ctx = execute('cat /etc/resolv.conf')
+    pattern_split = re.compile("nameserver +")
+    for each in resolv_ctx.splitlines():
+        if pattern_split.match(each):
+            act_dns_list.append(pattern_split.split(each, 1)[1])
+    print("系统实际DNS配置:")
+    print(act_dns_list)
+
+    os.system('chattr -i /etc/resolv.conf')
+    for exp_dns in exp_dns_list:
+        if exp_dns not in act_dns_list:
+            if promised("未配置DNS'%s', 是否配置 ? " % exp_dns):
+                os.system("sed -i '$a nameserver '%s /etc/resolv.conf" % exp_dns)
+    for act_dns in act_dns_list:
+        if act_dns not in exp_dns_list:
+            if promised("不期望的DNS'%s', 是否需要将其注释 ? " % act_dns):
+                command = "sed -i 's/^nameserver *%s/# nameserver %s/g' /etc/resolv.conf" % (act_dns, act_dns)
+                print(command)
+                os.system(command)
+    os.system('chattr +i /etc/resolv.conf')
 
 
 def sync_system_time(chrony_server_conf):
@@ -320,7 +348,15 @@ if __name__ == "__main__":
 
     # DNS配置
     info(padding("3.DNS配置"))
-    modify_dns_conf_optional(os_dict['name.servers'])
+    # modify_dns_conf_optional(os_dict['name.servers'])
+    v = os_version()
+    if v == 7:
+        os.system("systemctl stop NetworkManager")
+        os.system("systemctl disable NetworkManager")
+    elif v == 6:
+        os.system("service NetworkManager stop")
+        os.system("chkconfig NetworkManager off")
+    modify_resolv_conf(os_dict['name.servers'])
 
     # 系统时间同步
     info(padding("4.系统时间同步"))
